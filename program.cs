@@ -22,6 +22,7 @@ namespace SharePointExporter
             string sharePointPassword = ConfigurationManager.AppSettings["sharePointPassword"];
             string sharePointSite = ConfigurationManager.AppSettings["sharePointSite"];
             string sharePointList = ConfigurationManager.AppSettings["sharePointList"];
+            string listColumn = ConfigurationManager.AppSettings["listColumn"];
             // Login into sharpcloud
             var sc = new SharpCloudApi(sharpCloudUsername, sharpCloudPassword);
             var story = sc.LoadStory(sharpCloudStoryID);
@@ -44,10 +45,19 @@ namespace SharePointExporter
             context.Load(list);
             context.Load(items);
             context.ExecuteQuery();
+            var column = listColumn.Split(',');
             // Goes through List
             foreach(var item in items)
             {
                 Item sharpItem = story.Item_AddNew(item["Title"]);
+                foreach (var att in listColumn)
+                {
+                    if(story.Attribute_FindByName("Appropriated Budget") == null)
+                    {
+                        story.Attribute_Add(att, SC.API.ComInterop.Models.Attribute.AttributeType.Text);
+                        sharpItem.SetAttributeValue(newStory.Attribute_FindByName(att), item[att]);
+                    }
+                }
             }
 
             story.Save();
