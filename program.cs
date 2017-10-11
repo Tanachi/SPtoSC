@@ -7,7 +7,7 @@ using System.Security;
 using Microsoft.SharePoint.Client;
 using SC.API.ComInterop;
 using SC.API.ComInterop.Models;
-namespace SharePointExporter
+namespace SPtoSC
 {
     class Program
     {
