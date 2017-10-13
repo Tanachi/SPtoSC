@@ -7,7 +7,7 @@ using System.Security;
 using Microsoft.SharePoint.Client;
 using SC.API.ComInterop;
 using SC.API.ComInterop.Models;
-namespace SPtoSC
+namespace SharePointExporter
 {
     class Program
     {
@@ -63,6 +63,10 @@ namespace SPtoSC
                 addAttribute(PSB);
                 addAttribute(CSB);
             }
+            foreach(var field in items[2].FieldValues)
+            {
+                Console.WriteLine(field.Key +":" + field.Value);
+            }
             // Goes through List Items
             foreach(var item in items)
             {
@@ -104,19 +108,20 @@ namespace SPtoSC
         // Adds Attribute to story
         static void addAttribute(Story story)
         {
-            story.Attribute_Add("Percent Complete", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("Project Business Value", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
             story.Attribute_Add("Project Lead", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
             story.Attribute_Add("Project Team", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
+            story.Attribute_Add("External ID", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
+            story.Attribute_Add("Priority", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
             story.Attribute_Add("RAG Status", SC.API.ComInterop.Models.Attribute.AttributeType.List);
-            story.Attribute_Add("Status Comments", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("Project Dependencies/Assumptions/Risks", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("Appropriated Budget", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("Total Spent to Date", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
+            story.Attribute_Add("Percent Complete", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
             story.Attribute_Add("New Requested Budget", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
+            story.Attribute_Add("Appropriated Budget", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
+            story.Attribute_Add("Project Business Value", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
+            story.Attribute_Add("Project Dependencies/Assumptions/Risks", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
+            story.Attribute_Add("Status Comments", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
+            story.Attribute_Add("Total Spent to Date", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
             story.Attribute_Add("Financial Comments", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
             story.Attribute_Add("Value Stream/LOB", SC.API.ComInterop.Models.Attribute.AttributeType.List);
-            story.Attribute_Add("Priority", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
             story.Attribute_Add("Due Date", SC.API.ComInterop.Models.Attribute.AttributeType.Date);
         }
         // Adds Attribute data to item
@@ -154,6 +159,20 @@ namespace SPtoSC
                 storyItem.StartDate = DateTime.Parse(item["Start_x0020_Date"].ToString());
             if(item["Due_x0020_Date"] != null)
                 storyItem.SetAttributeValue(story.Attribute_FindByName("Due Date"), (item["Due_x0020_Date"].ToString()));
+            if(item["External_x0020_ID"] != null)
+                storyItem.SetAttributeValue(story.Attribute_FindByName("External ID"), (int.Parse(item["External_x0020_ID"].ToString())));
+            if(item["Tags_x002e_ETS_x0020_Priorities"] != null)
+            {
+
+            }
+            if(item["Tags_x002e_Governor_x0020_Priori"] != null)
+            {
+
+            }
+            if(item["Tags_x002e_ETS_x0020_Initiatives"] != null)
+            {
+
+            }
         }
     }
 }
