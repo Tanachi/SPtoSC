@@ -14,6 +14,10 @@ namespace SharePointExporter
 
         static void Main(string[] args)
         {
+            string[] attr = { "Project Lead|Text", "Project Team|Text", "External ID|Numeric","Priority|Numberic",
+            "Value Stream/LOB|List","RAG Status|List","Percent Complete|Numeric", "Due Date|Date","New Requested Budget|Numeric",
+            "Appropriated Budget|Numeric","Project Business Value|Text","Project Dependencies/Assumptions/Risks|Text",
+            "Status Comments|Text","Total Spent to Date|Numberic","Financial Comments|Text"};
             // Load from App.Config
             string sharpCloudUsername = ConfigurationManager.AppSettings["sharpCloudUsername"];
             string sharpCloudPassword = ConfigurationManager.AppSettings["sharpCloudPassword"];
@@ -55,18 +59,11 @@ namespace SharePointExporter
             context.ExecuteQuery();
             // Goes through List
             // Adds Attribute to story if none exist
-            if(SSB.Attribute_FindByName("Priority") == null)
-            {
-                addAttribute(SSB);
-                addAttribute(TSB);
-                addAttribute(TSSB);
-                addAttribute(PSB);
-                addAttribute(CSB);
-            }
-            foreach(var field in items[2].FieldValues)
-            {
-                Console.WriteLine(field.Key +":" + field.Value);
-            }
+            addAttribute(SSB, attr);
+            addAttribute(TSB, attr);
+            addAttribute(TSSB, attr);
+            addAttribute(PSB, attr);
+            addAttribute(CSB, attr);
             // Goes through List Items
             foreach(var item in items)
             {
@@ -79,23 +76,23 @@ namespace SharePointExporter
                 {
                     case "TSB":
                         if(TSB.Item_FindByName(item["Title"].ToString()) == null)
-                            addItem(TSB, item);
+                            addItem(TSB, item, attr);
                         break;
                     case "TSSB":
                         if(TSSB.Item_FindByName(item["Title"].ToString()) == null)
-                            addItem(TSSB, item);
+                            addItem(TSSB, item, attr);
                         break;
                     case "CSB":
                         if(CSB.Item_FindByName(item["Title"].ToString()) == null)
-                            addItem(CSB, item);
+                            addItem(CSB, item, attr);
                         break;
                     case "PSB":
                         if(PSB.Item_FindByName(item["Title"].ToString()) == null)
-                            addItem(PSB, item);
+                            addItem(PSB, item, attr);
                         break;
                     case "SSB":
                         if(SSB.Item_FindByName(item["Title"].ToString()) == null)
-                            addItem(SSB, item);
+                            addItem(SSB, item, attr);
                         break;
                 }
             }
@@ -106,72 +103,106 @@ namespace SharePointExporter
             SSB.Save();
         }
         // Adds Attribute to story
-        static void addAttribute(Story story)
+        static void addAttribute(Story story, string[] attr)
         {
-            story.Attribute_Add("Project Lead", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("Project Team", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("External ID", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("Priority", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("RAG Status", SC.API.ComInterop.Models.Attribute.AttributeType.List);
-            story.Attribute_Add("Percent Complete", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("New Requested Budget", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("Appropriated Budget", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("Project Business Value", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("Project Dependencies/Assumptions/Risks", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("Status Comments", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("Total Spent to Date", SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
-            story.Attribute_Add("Financial Comments", SC.API.ComInterop.Models.Attribute.AttributeType.Text);
-            story.Attribute_Add("Value Stream/LOB", SC.API.ComInterop.Models.Attribute.AttributeType.List);
-            story.Attribute_Add("Due Date", SC.API.ComInterop.Models.Attribute.AttributeType.Date);
+            foreach (var att in attr)
+            {
+                string[] split = att.Split('|');
+                var name = split[0];
+                var type = split[1];
+                if (story.Attribute_FindByName(name) == null)
+                {
+                    if (type == "Text")
+                    {
+                        story.Attribute_Add(name, SC.API.ComInterop.Models.Attribute.AttributeType.Text);
+                    }
+                    else if (type == "Numeric")
+                    {
+                        story.Attribute_Add(name, SC.API.ComInterop.Models.Attribute.AttributeType.Numeric);
+                    }
+                    else if (type == "List")
+                    {
+                        story.Attribute_Add(name, SC.API.ComInterop.Models.Attribute.AttributeType.List);
+                    }
+                    else if (type == "Date")
+                    {
+                        story.Attribute_Add(name, SC.API.ComInterop.Models.Attribute.AttributeType.Date);
+                    }
+
+                }
+            }
         }
         // Adds Attribute data to item
-        static void addItem(Story story, ListItem item)
-        {
+        static void addItem(Story story, ListItem item, string[] attr)
+        { 
             Item storyItem = story.Item_AddNew(item["Title"].ToString());
-            if(item["Project_x0020_Team"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Project Team"), item["Project_x0020_Team"].ToString());
-            if(item["Project_x0020_Lead"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Project Lead"), item["Project_x0020_Lead"].ToString());
-            if(item["Percent_x0020_Complete"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Percent Complete"), double.Parse(item["Percent_x0020_Complete"].ToString()));
-            if(item["Appropriated_x0020_Budget"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Appropriated Budget"), double.Parse(item["Appropriated_x0020_Budget"].ToString()));
-            if(item["New_x0020_Requested_x0020_Budget"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("New Requested Budget"), double.Parse(item["New_x0020_Requested_x0020_Budget"].ToString()));
-            if(item["Priority"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Priority"), double.Parse(item["Priority"].ToString()));
-            if(item["Total_x0020_Spent_x0020_to_x0020"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Total Spent to Date"), double.Parse(item["Total_x0020_Spent_x0020_to_x0020"].ToString()));
-            if(item["Project_x0020_Business_x0020_Val"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Project Business Value"), item["Project_x0020_Business_x0020_Val"].ToString());
-            storyItem.SetAttributeValue(story.Attribute_FindByName("RAG Status"), item["Status"].ToString());
-            if(item["Status_x0020_Comments"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Status Comments"), item["Status_x0020_Comments"].ToString());
-            if(item["Financial_x0020_Comments"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Financial Comments"), item["Financial_x0020_Comments"].ToString());
-            if(item["Project_x0020_Dependencies_x002f"] !=null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Project Dependencies/Assumptions/Risks"), item["Project_x0020_Dependencies_x002f"].ToString());
-            if(item["Category"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Value Stream/LOB"), item["Category"].ToString());
+            string[] shareAtt = { "Project_x0020_Lead", "Project_x0020_Team", "External_x0020_ID", "Priority","Category","Status",
+                "Percent_x0020_Complete", "Due_x0020_Date","New_x0020_Requested_x0020_Budget","Appropriated_x0020_Budget",
+                "Project_x0020_Business_x0020_Val","Project_x0020_Dependencies_x002f","Status_x0020_Comments","Total_x0020_Spent_x0020_to_x0020",
+            "Financial_x0020_Comments" };
+
+            for(var i = 0; i < attr.Length - 1; i++)
+            {
+                string[] split = attr[i].Split('|');
+                var name = split[0];
+                var type = split[1];
+                if (item[shareAtt[i]] != null)
+                {
+                    if (type == "Text" || type == "List")
+                    {
+                        storyItem.SetAttributeValue(story.Attribute_FindByName(name), item[shareAtt[i]].ToString());
+                    }
+                    else if (type == "Numeric")
+                    {
+                        storyItem.SetAttributeValue(story.Attribute_FindByName(name), double.Parse(item[shareAtt[i]].ToString()));
+                    }
+
+                    else if (type == "Date")
+                    {
+                        storyItem.SetAttributeValue(story.Attribute_FindByName(name), DateTime.Parse(item[shareAtt[i]].ToString()));
+                    }
+                }
+            }
             if(item["Notes"] != null)
                 storyItem.Description = item["Notes"].ToString();
             if(item["Start_x0020_Date"] !=null)
                 storyItem.StartDate = DateTime.Parse(item["Start_x0020_Date"].ToString());
-            if(item["Due_x0020_Date"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("Due Date"), (item["Due_x0020_Date"].ToString()));
-            if(item["External_x0020_ID"] != null)
-                storyItem.SetAttributeValue(story.Attribute_FindByName("External ID"), (int.Parse(item["External_x0020_ID"].ToString())));
-            if(item["Tags_x002e_ETS_x0020_Priorities"] != null)
-            {
-
-            }
-            if(item["Tags_x002e_Governor_x0020_Priori"] != null)
-            {
-
-            }
             if(item["Tags_x002e_ETS_x0020_Initiatives"] != null)
             {
+                string[] tagSplit = item["Tags_x002e_ETS_x0020_Initiatives"].ToString().Split(',');
+                foreach(var tag in tagSplit)
+                {
+                    if(story.ItemTag_FindByNameAndGroup(tag, "ETS Initiatives") == null)
+                    {
+                        story.ItemTag_AddNew(tag, "", "ETS Initiatives");
+                        storyItem.Tag_AddNew(story.ItemTag_FindByName(tag));
+                    }
+                }
+            }
+            if (item["Tags_x002e_Governor_x0020_Priori"] != null)
+            {
+                string[] tagSplit = item["Tags_x002e_Governor_x0020_Priori"].ToString().Split(',');
+                foreach (var tag in tagSplit)
+                {
+                    if (story.ItemTag_FindByNameAndGroup(tag, "Governor Priorities") == null)
+                    {
+                        story.ItemTag_AddNew(tag, "", "Governor Priorities");
+                        storyItem.Tag_AddNew(story.ItemTag_FindByName(tag));
+                    }
+                }
+            }
+            if (item["Tags_x002e_ETS_x0020_Priorities"] != null)
+            {
+                string[] tagSplit = item["Tags_x002e_ETS_x0020_Priorities"].ToString().Split(',');
+                foreach (var tag in tagSplit)
+                {
+                    if (story.ItemTag_FindByNameAndGroup(tag, "ETS Priorities") == null)
+                    {
+                        story.ItemTag_AddNew(tag, "", "ETS Priorities");
 
+                        storyItem.Tag_AddNew(story.ItemTag_FindByName(tag));
+                    }
+                }
             }
         }
     }
